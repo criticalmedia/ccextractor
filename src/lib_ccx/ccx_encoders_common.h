@@ -67,6 +67,8 @@ struct encoder_ctx
 	/* Input outputs */
 	/* Flag giving hint that output is send to server through network */
 	unsigned int send_to_srv;
+	/* Flag giving hint that output is send to server through amqp */
+	unsigned int send_to_amqp;
 	/* Used only in Spupng output */
 	int multiple_files;
 	/* Used only in Spupng output and creating name of output file*/
@@ -129,7 +131,7 @@ struct encoder_ctx
 	unsigned int encoded_crlf_length;
 	unsigned char encoded_br[16];
 	unsigned int encoded_br_length;
-
+	
 	// MCC File
 	int header_printed_flag;
     struct ccx_mcc_caption_time next_caption_time;
@@ -203,6 +205,7 @@ void write_cc_buffer_to_gui           (struct eia608_screen *data, struct encode
 
 int write_cc_buffer_as_g608           (struct eia608_screen *data, struct encoder_ctx *context);
 int write_cc_buffer_as_transcript2    (struct eia608_screen *data, struct encoder_ctx *context);
+int amqp_cc_buffer_as_transcript2     (struct eia608_screen *data, struct encoder_ctx *context);
 
 void write_cc_line_as_transcript2     (struct eia608_screen *data, struct encoder_ctx *context, int line_number);
 
@@ -213,6 +216,7 @@ int write_cc_subtitle_as_sami         (struct cc_subtitle *sub, struct encoder_c
 int write_cc_subtitle_as_smptett      (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_spupng       (struct cc_subtitle *sub, struct encoder_ctx *context);
 int write_cc_subtitle_as_transcript   (struct cc_subtitle *sub, struct encoder_ctx *context);
+int amqp_cc_subtitle_as_transcript    (struct cc_subtitle *sub, struct encoder_ctx *context);
 
 
 int write_stringz_as_srt              (char *string, struct encoder_ctx *context, LLONG ms_start, LLONG ms_end);

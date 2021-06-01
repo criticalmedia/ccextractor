@@ -395,6 +395,9 @@ void print_usage(void)
 	mprint("                                   tcp server\n");
 	mprint("            -tcpdesc description: Sends to the server short description about\n");
 	mprint("                                  captions e.g. channel name or file name\n");
+	mprint("            -amqp username:password@host:port/vhost: Sends captioning to AMQP\n");
+	mprint("            -amqp_exchange: Exchange to publish messages to when using AMQP\n");
+	mprint("            -amqp_routing_key: Routing key to use when publishing messages to AMQP\n");
 	mprint("Options that affect what will be processed:\n");
 	mprint("          -1, -2, -12: Output Field 1 data, Field 2 data, or both\n");
 	mprint("                       (DEFAULT is -1)\n");
@@ -2667,6 +2670,53 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 				fatal(EXIT_MALFORMED_PARAMETER, "-sendto has no argument.\n");
 			}
 		}
+		if (strcmp(argv[i], "-amqp") == 0)
+		{
+			if (i < argc - 1)
+			{
+				opt->send_to_amqp = 1;
+				i++;
+				fprintf(stderr, "Parsing AMQP Options from %s\n", argv[i]);
+				if (sscanf(argv[i], "%[^:]:%[^@]@%[^:]:%d/%s",
+                    			opt->amqp_user, opt->amqp_pass, opt->amqp_host, &opt->amqp_port, opt->amqp_vhost) < 5)
+                		{
+                    			fatal (EXIT_MALFORMED_PARAMETER, "For amqp auth, you need user:pass@host:port/vhost\n");
+                		}
+                		fprintf(stderr, "Using AMQP params %s %d %s %s %s\n", 
+                    			opt->amqp_host, opt->amqp_port, opt->amqp_user, opt->amqp_pass, opt->amqp_vhost);
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-amqp has no argument.\n");
+			}
+		}
+		if (strcmp(argv[i], "-amqp_exchange") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+				opt->amqp_exchange = argv[i];
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-amqp_exchange has no argument.\n");
+			}
+		}
+		if (strcmp(argv[i], "-amqp_routing_key") == 0)
+		{
+			if (i < argc - 1)
+			{
+				i++;
+				opt->amqp_routing_key = argv[i];
+				continue;
+			}
+			else
+			{
+				fatal(EXIT_MALFORMED_PARAMETER, "-amqp_routing_key has no argument.\n");
+			}
+		}
 		if (strcmp(argv[i], "-tcp") == 0)
 		{
 			if (i < argc - 1)
@@ -2935,6 +2985,7 @@ int parse_parameters(struct ccx_s_options *opt, int argc, char *argv[])
 	opt->enc_cfg.cc_to_stdout = opt->cc_to_stdout;
 	opt->enc_cfg.write_format = opt->write_format;
 	opt->enc_cfg.send_to_srv = opt->send_to_srv;
+	opt->enc_cfg.send_to_amqp = opt->send_to_amqp;
 	opt->enc_cfg.date_format = opt->date_format;
 	opt->enc_cfg.transcript_settings = opt->transcript_settings;
 	opt->enc_cfg.millis_separator = opt->millis_separator;

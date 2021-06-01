@@ -61,6 +61,7 @@ struct encoder_cfg
 
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	unsigned int send_to_srv;
+	unsigned int send_to_amqp;
 	int no_bom;                                         // Set to 1 when no BOM (Byte Order Mark) should be used for files. Note, this might make files unreadable in windows!
 	char *first_input_file;
 	int multiple_files;
@@ -160,6 +161,7 @@ struct ccx_s_options // Options from user parameters
 	ccx_encoders_transcript_format transcript_settings; // Keeps the settings for generating transcript output files.
 	enum ccx_output_date_format date_format;
 	unsigned send_to_srv;
+	unsigned send_to_amqp;
 	enum ccx_output_format write_format;                // 0=Raw, 1=srt, 2=SMI
 	int write_format_rewritten;
 	int use_ass_instead_of_ssa;
@@ -175,6 +177,13 @@ struct ccx_s_options // Options from user parameters
 	char *tcp_desc;
 	char *srv_addr;
 	char *srv_port;
+	char amqp_user[100];
+	char amqp_pass[100];
+	char amqp_host[100];
+	unsigned amqp_port;
+	char amqp_vhost[100];
+	char *amqp_exchange;
+	char *amqp_routing_key;
 	int noautotimeref;                                  // Do NOT set time automatically?
 	enum ccx_datasource input_source;                   // Files, stdin or network
 

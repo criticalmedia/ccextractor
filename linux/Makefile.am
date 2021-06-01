@@ -206,6 +206,8 @@ ccextractor_SOURCES = \
 				../src/lib_ccx/hardsubx_utility.c \
 				../src/lib_ccx/lib_ccx.c \
 				../src/lib_ccx/lib_ccx.h \
+				../src/lib_ccx/librabbitmq.h \
+				../src/lib_ccx/librabbitmq_utils.c \
 				../src/lib_ccx/list.h \
 				../src/lib_ccx/matroska.c \
 				../src/lib_ccx/matroska.h \

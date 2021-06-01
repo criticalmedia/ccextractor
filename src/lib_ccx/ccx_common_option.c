@@ -102,6 +102,9 @@ void init_options(struct ccx_s_options *options)
 	options->tcp_desc = NULL;
 	options->srv_addr = NULL;
 	options->srv_port = NULL;
+	options->send_to_amqp = 0;
+	options->amqp_exchange = NULL;
+	options->amqp_routing_key = NULL;
 	options->noautotimeref = 0;	     // Do NOT set time automatically?
 	options->input_source = CCX_DS_FILE; // Files, stdin or network
 	options->multiprogram = 0;

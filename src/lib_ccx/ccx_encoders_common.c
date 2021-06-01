@@ -512,6 +512,8 @@ static int write_subtitle_file_header(struct encoder_ctx *ctx, struct ccx_s_writ
 
 			if (ctx->send_to_srv)
 				net_send_header(rcwt_header, sizeof(rcwt_header));
+			else if (ctx->send_to_amqp)
+				amqp_write((uint8_t*)rcwt_header, sizeof(rcwt_header), ccx_options.amqp_exchange, ccx_options.amqp_routing_key);
 			else
 			{
 				if (write(out->fh, rcwt_header, sizeof(rcwt_header)) < 0)
@@ -781,7 +783,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		return ret;                                                                                                               \
 	}
 
-	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->extract == 12 && cfg->write_format != CCX_OF_MCC)
+	if (cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->send_to_amqp == CCX_FALSE && cfg->extract == 12 && cfg->write_format != CCX_OF_MCC)
 		nb_lang = 2;
 	else
 		nb_lang = 1;
@@ -796,7 +798,7 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 	ctx->ucla = cfg->ucla;
 	ctx->force_dropframe = cfg->force_dropframe;
 
-	if (ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE)
+	if (ctx->generates_file && cfg->cc_to_stdout == CCX_FALSE && cfg->send_to_srv == CCX_FALSE && cfg->send_to_amqp == CCX_FALSE)
 	{
 		if (cfg->output_filename != NULL)
 		{
@@ -860,6 +862,20 @@ static int init_output_ctx(struct encoder_ctx *ctx, struct encoder_cfg *cfg)
 		ctx->out[0].filename = NULL;
 
 		connect_to_srv(ccx_options.srv_addr, ccx_options.srv_port, ccx_options.tcp_desc, ccx_options.tcp_password);
+	}
+
+	if (cfg->send_to_amqp == CCX_TRUE)
+	{
+		ctx->out[0].fh = -1;
+		ctx->out[0].filename = NULL;
+		mprint("Sending captions to AMQP\n");
+		amqp_open(
+			ccx_options.amqp_user,
+			ccx_options.amqp_pass,
+			ccx_options.amqp_host,
+			ccx_options.amqp_port,
+			ccx_options.amqp_vhost
+		);
 	}
 
 	if (cfg->dtvcc_extract)
@@ -959,6 +975,7 @@ struct encoder_ctx *init_encoder(struct encoder_cfg *opt)
 
 	ctx->program_number = opt->program_number;
 	ctx->send_to_srv = opt->send_to_srv;
+	ctx->send_to_amqp = opt->send_to_amqp;
 	ctx->multiple_files = opt->multiple_files;
 	ctx->first_input_file = opt->first_input_file;
 
@@ -1182,7 +1199,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 						wrote_something = write_cc_buffer_as_smptett(data, context);
 						break;
 					case CCX_OF_TRANSCRIPT:
-						wrote_something = write_cc_buffer_as_transcript2(data, context);
+						if (context->send_to_amqp)
+							wrote_something = amqp_cc_buffer_as_transcript2(data, context);
+						else
+							wrote_something = write_cc_buffer_as_transcript2(data, context);
 						break;
 					case CCX_OF_SPUPNG:
 						wrote_something = write_cc_buffer_as_spupng(data, context);
@@ -1287,6 +1307,8 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 		case CC_RAW:
 			if (context->send_to_srv)
 				net_send_header(sub->data, sub->nb_data);
+			else if (context->send_to_amqp)
+				amqp_write((uint8_t*)sub->data, sub->nb_data, ccx_options.amqp_exchange, ccx_options.amqp_routing_key);
 			else
 			{
 				ret = write(context->out->fh, sub->data, sub->nb_data);
@@ -1326,7 +1348,10 @@ int encode_sub(struct encoder_ctx *context, struct cc_subtitle *sub)
 					wrote_something = write_cc_subtitle_as_smptett(sub, context);
 					break;
 				case CCX_OF_TRANSCRIPT:
-					wrote_something = write_cc_subtitle_as_transcript(sub, context);
+					if (context->send_to_amqp)
+						wrote_something = amqp_cc_subtitle_as_transcript(sub, context);
+					else
+						wrote_something = write_cc_subtitle_as_transcript(sub, context);
 					break;
 				case CCX_OF_SPUPNG:
 					wrote_something = write_cc_subtitle_as_spupng(sub, context);
